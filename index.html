@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#2f5bea">
+<meta name="description" content="公考备考 · 攒钱规划 · 生活配套 三位一体的个人目标管理工作台">
+<title>上岸计划 · 个人目标工作台</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="上岸计划">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="app">
+  <!-- 侧栏（桌面端） -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">上岸</div>
+      <div class="brand-text">
+        <strong>上岸计划</strong>
+        <span>个人目标工作台</span>
+      </div>
+    </div>
+    <nav class="side-nav" id="sideNav"></nav>
+    <div class="side-foot">
+      <button class="btn btn-ghost btn-block" data-nav="settings">
+        <span class="i">⚙</span> 设置与备份
+      </button>
+      <p class="side-tip">数据全部保存在本机，离线可用</p>
+    </div>
+  </aside>
+
+  <!-- 主区 -->
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-l">
+        <h1 id="pageTitle">总看板</h1>
+        <p id="pageSub" class="sub"></p>
+      </div>
+      <div class="topbar-r" id="countdowns"></div>
+    </header>
+    <div id="alertZone"></div>
+    <div id="page" class="page"></div>
+    <div class="safe-pad"></div>
+  </main>
+
+  <!-- 底部标签（移动端） -->
+  <nav class="tabbar" id="tabBar"></nav>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/store.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/home.js"></script>
+<script src="js/study.js"></script>
+<script src="js/finance.js"></script>
+<script src="js/life.js"></script>
+<script src="js/review.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
