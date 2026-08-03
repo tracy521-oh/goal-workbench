@@ -59,6 +59,19 @@
       wrongQs: [],
       // 公考备考 · 申论精读已读标记
       reading: { read: {} },
+      // 作家成长路
+      writer: {
+        title: '我的小说',
+        chapters: [],          // {id, title, content, words, updatedAt}
+        log: {},               // 'YYYY-MM-DD': 当日累计创作字数
+        potMark: ''            // 已发放「一壶水」奖励的日期（防重复）
+      },
+      // 全局奖励 · 浇灌大树
+      rewards: {
+        drops: 0,              // 累计水滴（用于大树成长）
+        claimedMonth: '',      // 已领取月度结余奖励的月份
+        log: []                // {date, amount, reason, project, icon}
+      },
       _lastRemind: ''
     };
   }
@@ -116,6 +129,63 @@
       state = merge(defaults(), d);
       save();
       return true;
+    },
+
+    /* ---------- 奖励：水滴 → 浇灌大树 ---------- */
+    drop: function (amount, reason, project, icon) {
+      amount = Number(amount) || 0;
+      if (amount <= 0) return;
+      var st = state;
+      st.rewards.drops = (st.rewards.drops || 0) + amount;
+      st.rewards.log.unshift({
+        date: U.today(), amount: amount, reason: reason || '',
+        project: project || '', icon: icon || '💧'
+      });
+      if (st.rewards.log.length > 400) st.rewards.log.length = 400;
+      save();
+      if (typeof UI !== 'undefined' && UI.toast) UI.toast('💧 +' + amount + ' 滴水 · ' + reason, 'ok');
+    },
+    // 大树成长阶段
+    treeStage: function () {
+      var d = (state.rewards.drops) || 0;
+      var stages = [
+        { min: 0, name: '一粒种子', icon: '🌰', desc: '一切才刚刚开始' },
+        { min: 30, name: '破土发芽', icon: '🌱', desc: '冒出第一片嫩芽' },
+        { min: 80, name: '幼苗舒展', icon: '🌿', desc: '枝叶开始舒展开' },
+        { min: 160, name: '小树成型', icon: '🌳', desc: '初具大树的模样' },
+        { min: 300, name: '枝繁叶茂', icon: '🌲', desc: '正茁壮地成长' },
+        { min: 500, name: '参天大树', icon: '🌴', desc: '目标达成，生命之树长成！' }
+      ];
+      var cur = stages[0], next = null, idx = 0;
+      for (var i = 0; i < stages.length; i++) {
+        if (d >= stages[i].min) { cur = stages[i]; idx = i; if (i + 1 < stages.length) next = stages[i + 1]; }
+      }
+      var pct = next ? Math.round((d - cur.min) / (next.min - cur.min) * 100) : 100;
+      return { drops: d, cur: cur, next: next, pct: pct, done: !next, idx: idx, total: stages.length };
+    },
+    // 任务完成：按难度给含水量
+    completeTask: function (id) {
+      var st = state;
+      var t = st.tasks.filter(function (x) { return x.id === id; })[0];
+      if (!t || t.status === '已完成') return;
+      t.status = '已完成'; t.doneAt = U.today();
+      var map = { '简单': 1, '普通': 2, '困难': 3, '挑战': 5 };
+      var amt = map[t.difficulty] || 1;
+      if (t.jlFeature) amt += 1;
+      S.drop(amt, '完成任务：' + t.title, '公考', '📚');
+      S.commit();
+    },
+    // 作家当日创作字数累计；满 2000 字浇灌一壶水（10 滴）
+    writerAddWords: function (n) {
+      n = Number(n) || 0;
+      if (n <= 0) return;
+      var st = state, today = U.today();
+      st.writer.log[today] = (st.writer.log[today] || 0) + n;
+      if (st.writer.log[today] >= 2000 && st.writer.potMark !== today) {
+        st.writer.potMark = today;
+        S.drop(10, '当日创作破 2000 字 · 浇灌一壶水', '作家', '🪣');
+      }
+      save();
     }
   };
 
