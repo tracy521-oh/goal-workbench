@@ -139,6 +139,7 @@
         }
         st.reviews.sort(function (a, b) { return a.weekStart < b.weekStart ? 1 : -1; });
         S.commit();
+        if (isNew) S.drop(3, '完成每周复盘', '复盘', '🗓');
       }
     });
   };
