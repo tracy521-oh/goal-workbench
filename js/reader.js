@@ -27,6 +27,7 @@
     h += '<div class="row" style="margin-bottom:12px">' +
       UI.seg([{ v: 'books', l: '📚 书单' }, { v: 'quotes', l: '✨ 金句摘抄' }], ui.tab, 'rtab') +
       '<span class="spacer"></span>' +
+      '<button class="btn btn-sm" id="importBtn">📥 导入</button>' +
       (ui.tab === 'books' ? '<button class="btn btn-primary btn-sm" id="addBook">＋ 加书</button>'
         : '<button class="btn btn-primary btn-sm" id="addQuote">＋ 摘抄</button>') + '</div>';
 
@@ -39,6 +40,7 @@
     if (ui.tab === 'quotes') bindQuotesView(el);
     var ab = el.querySelector('#addBook'); if (ab) ab.onclick = function () { bookForm(null); };
     var aq = el.querySelector('#addQuote'); if (aq) aq.onclick = function () { quoteForm(null, firstBookId()); };
+    var ib = el.querySelector('#importBtn'); if (ib) ib.onclick = function () { importData(); };
     U.$$('[data-ob]', el).forEach(function (b) { b.onclick = function () { ui.openId = b.dataset.ob; R.render(el); }; });
   };
 
@@ -422,6 +424,206 @@
 
   function firstBookId() { var b = books()[0]; return b ? b.id : ''; }
 
+  /* ---------------- 导入：文件 / 粘贴（支持微信读书等导出） ---------------- */
+  function importData() {
+    var mode = 'file';
+    function fileTab() {
+      return '<div class="f"><label>选择文件（.json 或 .csv）</label>' +
+        '<input type="file" id="impFile" accept=".json,.csv,application/json,text/csv">' +
+        '<div class="hint">JSON：支持完整书单 + 读书笔记 + 金句；CSV：仅书单（列：书名,作者,分类,状态,进度）。字段也兼容中文表头。</div></div>' +
+        '<div class="f"><button class="btn btn-sm" id="dlTpl">⬇ 下载 JSON 导入模板</button></div>' +
+        '<div id="impMsg" class="tiny" style="white-space:pre-wrap"></div>';
+    }
+    function pasteTab() {
+      var opts = books().map(function (x) { return { v: x.id, l: x.title }; });
+      opts.unshift({ v: '__new__', l: '➕ 新建一本书' });
+      return '<div class="f"><label>归入书籍</label><select id="impBook">' +
+        opts.map(function (o) { return '<option value="' + U.esc(o.v) + '">' + U.esc(o.l) + '</option>'; }).join('') + '</select></div>' +
+        '<div class="f"><label>解析方式</label><select id="impMode">' +
+        '<option value="smart">智能识别（金句/笔记自动分）</option>' +
+        '<option value="quote">全部作为金句</option>' +
+        '<option value="note">全部作为笔记</option></select></div>' +
+        '<div class="f"><label>粘贴笔记 / 划线文本</label>' +
+        '<textarea id="impText" rows="9" placeholder="从微信读书等 App 复制笔记后粘贴到这里……"></textarea>' +
+        '<div class="hint">智能模式：首行含《书名》会自动作为新书标题；含「想法/笔记/批注」的行归为笔记，其余归为金句。</div></div>' +
+        '<div id="impMsg2" class="tiny" style="white-space:pre-wrap"></div>';
+    }
+    UI.sheet({
+      title: '导入阅读数据',
+      body: '<div class="row" style="margin-bottom:10px">' +
+        UI.seg([{ v: 'file', l: '📁 文件导入' }, { v: 'paste', l: '📋 粘贴导入' }], mode, 'impseg') + '</div>' +
+        '<div id="impBody"></div>',
+      footer: '<button class="btn" data-x>取消</button><button class="btn btn-primary" id="doImp">开始导入</button>',
+      onMount: function (m, close) {
+        var b = m.querySelector('#impBody');
+        function fill() {
+          b.innerHTML = mode === 'file' ? fileTab() : pasteTab();
+          var dt = b.querySelector('#dlTpl');
+          if (dt) dt.onclick = function () { downloadTemplate(); };
+        }
+        fill();
+        UI.bindSeg(m, 'impseg', function (v) { mode = v; fill(); });
+        m.querySelector('#doImp').onclick = function () {
+          if (mode === 'file') doFileImport(m, close); else doPasteImport(m, close);
+        };
+      }
+    });
+  }
+
+  function downloadTemplate() {
+    var tpl = {
+      books: [
+        {
+          title: '示例书名', author: '作者名', category: '文学小说', status: '在读', page: '120',
+          notes: [{ date: U.today(), chapter: '第三章', text: '这是一条读书笔记示例。' }],
+          quotes: [{ date: U.today(), page: '88', text: '这是一句金句示例。', fav: true }]
+        }
+      ]
+    };
+    var blob = new Blob([JSON.stringify(tpl, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '阅读者导入模板.json';
+    document.body.appendChild(a); a.click(); setTimeout(function () { document.body.removeChild(a); }, 200);
+    UI.toast('模板已下载 ⬇', 'ok');
+  }
+
+  function doFileImport(m, close) {
+    var input = m.querySelector('#impFile');
+    var msg = m.querySelector('#impMsg');
+    var f = input && input.files && input.files[0];
+    if (!f) { UI.toast('请先选择文件', 'err'); return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var text = reader.result;
+        var added = 0, nNotes = 0, nQuotes = 0;
+        if (/\.json$/i.test(f.name) || f.type === 'application/json') {
+          var data = JSON.parse(text);
+          var arr = Array.isArray(data) ? data : (data.books ? data.books : null);
+          if (!arr) throw new Error('JSON 格式不正确：应为书籍数组，或含 books 字段的对象');
+          arr.forEach(function (it) { var r = addBookFromObj(it); added++; nNotes += r.nNotes; nQuotes += r.nQuotes; });
+        } else {
+          var rows = parseCSV(text);
+          if (!rows.length) throw new Error('CSV 为空或解析失败');
+          rows.forEach(function (row) { addBookFromObj(row); added++; });
+        }
+        S.commit();
+        UI.toast('导入成功：' + added + ' 本书（金句 ' + nQuotes + ' / 笔记 ' + nNotes + '）', 'ok');
+        close(); if (curEl) R.render(curEl);
+      } catch (e) {
+        if (msg) { msg.style.color = '#c0392b'; msg.textContent = '导入失败：' + e.message; }
+        UI.toast('导入失败：' + e.message, 'err');
+      }
+    };
+    reader.onerror = function () { UI.toast('文件读取失败', 'err'); };
+    reader.readAsText(f);
+  }
+
+  function addBookFromObj(obj) {
+    var st = S.get();
+    var title = (obj.title || obj.书名 || '').toString().trim();
+    if (!title) return { nNotes: 0, nQuotes: 0 };
+    var status = (obj.status || obj.状态 || '想读').toString().trim();
+    if (STATUS.indexOf(status) < 0) status = '想读';
+    var cat = (obj.category || obj.分类 || CATS[0]).toString().trim();
+    if (CATS.indexOf(cat) < 0) cat = CATS[0];
+    var nb = {
+      id: U.uid(), title: title, author: (obj.author || obj.作者 || '').toString().trim(),
+      category: cat, status: status, cover: obj.cover || '', file: null,
+      page: (obj.page || obj.进度 || '').toString().trim(), updatedAt: U.today(), notes: [], quotes: []
+    };
+    var rawNotes = obj.notes || obj.笔记, nNotes = 0;
+    if (Array.isArray(rawNotes)) rawNotes.forEach(function (n) {
+      var txt = (n.text || n.内容 || n || '').toString().trim(); if (!txt) return;
+      nb.notes.push({ id: U.uid(), date: (n.date || n.日期 || U.today()).toString().trim(), chapter: ((n.chapter || n.章节 || '') + '').trim(), text: txt });
+      nNotes++;
+    });
+    var rawQuotes = obj.quotes || obj.金句, nQuotes = 0;
+    if (Array.isArray(rawQuotes)) rawQuotes.forEach(function (q) {
+      var txt = (q.text || q.内容 || q || '').toString().trim(); if (!txt) return;
+      nb.quotes.push({ id: U.uid(), date: (q.date || q.日期 || U.today()).toString().trim(), page: ((q.page || q.页码 || '') + '').trim(), text: txt, fav: !!q.fav });
+      nQuotes++;
+    });
+    st.reader.books.push(nb);
+    return { nNotes: nNotes, nQuotes: nQuotes };
+  }
+
+  function parseCSV(text) {
+    var lines = text.split(/\r?\n/).filter(function (l) { return l.trim() !== ''; });
+    if (!lines.length) return [];
+    var headers = splitCSVLine(lines[0]).map(function (h) { return h.trim(); });
+    return lines.slice(1).map(function (line) {
+      var cells = splitCSVLine(line), o = {};
+      headers.forEach(function (h, i) { o[h] = cells[i] !== undefined ? cells[i] : ''; });
+      return o;
+    });
+  }
+  function splitCSVLine(line) {
+    var out = [], cur = '', q = false;
+    for (var i = 0; i < line.length; i++) {
+      var c = line[i];
+      if (c === '"') { if (q && line[i + 1] === '"') { cur += '"'; i++; } else q = !q; }
+      else if (c === ',' && !q) { out.push(cur); cur = ''; }
+      else cur += c;
+    }
+    out.push(cur); return out;
+  }
+
+  function doPasteImport(m, close) {
+    var text = (m.querySelector('#impText').value || '').trim();
+    var mode = m.querySelector('#impMode').value;
+    var bookSel = m.querySelector('#impBook').value;
+    if (!text) { UI.toast('请先粘贴内容', 'err'); return; }
+    var st = S.get(), targetBook = null;
+    if (bookSel === '__new__') {
+      var lines = text.split(/\r?\n/);
+      var fi = -1;
+      for (var i = 0; i < lines.length; i++) { if (lines[i].trim()) { fi = i; break; } }
+      var newTitle = '导入的书籍';
+      if (fi >= 0 && /《.+》/.test(lines[fi].trim())) {
+        newTitle = lines[fi].match(/《([^》]+)》/)[1];
+        lines.splice(fi, 1); text = lines.join('\n');
+      }
+      targetBook = { id: U.uid(), title: newTitle, author: '', category: CATS[0], status: '在读', cover: '', file: null, page: '', updatedAt: U.today(), notes: [], quotes: [] };
+      st.reader.books.push(targetBook);
+    } else {
+      targetBook = book(bookSel);
+      if (!targetBook) { UI.toast('请选择有效书籍', 'err'); return; }
+    }
+    var res = parsePaste(text, mode, targetBook);
+    S.commit();
+    UI.toast('导入完成：' + res.nQuotes + ' 金句 / ' + res.nNotes + ' 笔记', 'ok');
+    close(); if (curEl) R.render(curEl);
+  }
+
+  function parsePaste(text, mode, bk) {
+    var raw = text.split(/\r?\n/), nNotes = 0, nQuotes = 0, firstIdx = -1;
+    for (var i = 0; i < raw.length; i++) { if (raw[i].trim()) { firstIdx = i; break; } }
+    raw.forEach(function (line, idx) {
+      var l = line.trim();
+      if (!l || l === '---' || l === '***') return;
+      if (mode === 'smart' && idx === firstIdx && /《.+》/.test(l)) return;
+      var isNote;
+      if (mode === 'note') isNote = true;
+      else if (mode === 'quote') isNote = false;
+      else isNote = /^(想法|笔记|批注|我的想法|✍)/.test(l) || /(想法|笔记|批注)[：:]/.test(l);
+      if (isNote) {
+        bk.notes.push({ id: U.uid(), date: U.today(), chapter: '', text: stripPrefix(l) });
+        nNotes++;
+      } else {
+        bk.quotes.push({ id: U.uid(), date: U.today(), page: '', text: stripQuote(l), fav: false });
+        nQuotes++;
+      }
+    });
+    return { nNotes: nNotes, nQuotes: nQuotes };
+  }
+  function stripPrefix(line) {
+    return line.replace(/^(想法|笔记|批注|我的想法|✍)[：:\s]*/, '').replace(/^(想法|笔记|批注)[：:]*/, '').trim();
+  }
+  function stripQuote(line) {
+    return line.replace(/^[「“”‘’"'']+|[」“”‘’"'']+$/g, '').trim();
+  }
+
+  R.importData = importData;
   R.bookForm = bookForm;
   R.quoteForm = quoteForm;
   g.Reader = R;
