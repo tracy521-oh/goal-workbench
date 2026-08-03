@@ -1,10 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#3b6ef5"/>
-      <stop offset="1" stop-color="#2f5bea"/>
+      <stop offset="0" stop-color="#b9a7d4"/>
+      <stop offset="1" stop-color="#9b8bb4"/>
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#g)"/>
-  <text x="256" y="268" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', 'Heiti SC', sans-serif" font-size="196" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="central">上岸</text>
+  <!-- 茎 -->
+  <path d="M256 400 C256 360 256 320 256 300" stroke="#ffffff" stroke-width="14" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <!-- 左叶 -->
+  <path d="M256 320 C200 318 168 286 170 244 C214 248 250 276 256 320 Z" fill="#ffffff" opacity="0.95"/>
+  <!-- 右叶 -->
+  <path d="M256 300 C310 296 344 262 342 218 C298 222 262 252 256 300 Z" fill="#ffffff" opacity="0.85"/>
+  <!-- 顶芽 -->
+  <circle cx="256" cy="208" r="26" fill="#ffffff"/>
+  <circle cx="256" cy="208" r="11" fill="#9b8bb4"/>
 </svg>
