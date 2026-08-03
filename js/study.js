@@ -42,7 +42,7 @@
     var t = task || Object.assign({
       id: '', title: '', module: C.MODULES[0], estMin: 60, due: U.today(),
       status: '未开始', exam: '通用', jlFeature: false, phase: C.PHASES[0],
-      note: '', link: '', img: ''
+      difficulty: '普通', note: '', link: '', img: ''
     }, presets || {});
     var img = t.img || '';
 
@@ -59,6 +59,7 @@
         { key: 'estMin', label: '预估时长（分钟）', type: 'number', value: t.estMin, half: true, min: 0, inputmode: 'numeric' },
         { key: 'due', label: '截止日期', type: 'date', value: t.due, half: true },
         { key: 'status', label: '完成状态', type: 'options', value: t.status, options: C.STATUS },
+        { key: 'difficulty', label: '任务难度（决定含水量）', type: 'options', value: t.difficulty, options: [{ v: '简单', l: '简单 · 1 滴水' }, { v: '普通', l: '普通 · 2 滴水' }, { v: '困难', l: '困难 · 3 滴水' }, { v: '挑战', l: '挑战 · 5 滴水' }] },
         { key: 'jlFeature', label: '', type: 'checkbox', value: t.jlFeature, text: '⭐ 标记为「吉林省考特色考点」任务' },
         { key: 'note', label: '笔记', type: 'textarea', value: t.note, placeholder: '知识点要点、易错提醒…' },
         { key: 'link', label: '附件链接', type: 'url', value: t.link, placeholder: 'https:// 网课 / 题库 / 云笔记 链接' }
@@ -164,6 +165,7 @@
         st.checkins.sort(function (a, b) { return a.date < b.date ? 1 : -1; });
         st._lastRemind = U.today();
         S.commit();
+        if (isNew) S.drop(2, '学习打卡 · ' + v.minutes + ' 分钟', '公考', '📚');
       }
     });
   };
@@ -460,10 +462,9 @@
         e.stopPropagation();
         var t = st.tasks.filter(function (x) { return x.id === b.dataset.tick; })[0];
         if (!t) return;
-        t.status = t.status === '未开始' ? '进行中' : (t.status === '进行中' ? '已完成' : '未开始');
-        t.doneAt = t.status === '已完成' ? U.today() : '';
-        if (t.status === '已完成') UI.toast('完成 +1 💪', 'ok');
-        S.commit();
+        if (t.status === '已完成') { t.status = '进行中'; t.doneAt = ''; S.commit(); return; }
+        if (t.status === '未开始') { t.status = '进行中'; S.commit(); return; }
+        S.completeTask(t.id); // 进行中 -> 已完成，按难度奖励水滴
       };
     });
     U.$$('[data-edit]', el).forEach(function (b) {
