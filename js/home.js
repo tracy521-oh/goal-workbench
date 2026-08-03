@@ -92,6 +92,7 @@
       '<button data-q="checkin"><span class="i">✅</span>学习打卡</button>' +
       '<button data-q="review"><span class="i">🗓</span>每周复盘</button>' +
       '<button data-q="write"><span class="i">✍️</span>开始创作</button>' +
+      '<button data-q="read"><span class="i">📖</span>开始阅读</button>' +
       '</div></div>';
 
     /* 今日任务 */
@@ -121,6 +122,7 @@
       st.tasks.filter(function (t) { return t.jlFeature; }).length + '</b></div>' +
       '<div class="kv"><span>✍️ 今日创作字数</span><b>' + (st.writer.log[U.today()] || 0) + ' 字' +
       ((st.writer.log[U.today()] || 0) >= 2000 ? ' 🪣' : '') + '</b></div>' +
+      '<div class="kv"><span>📖 在读 / 藏书</span><b>' + st.reader.books.filter(function (x) { return x.status === '在读'; }).length + ' / ' + st.reader.books.length + ' 本</b></div>' +
       '</div>';
 
     el.innerHTML = h;
@@ -150,6 +152,7 @@
         else if (k === 'txn') Fin.txnForm(null, 'expense');
         else if (k === 'checkin') Study.checkinForm();
         else if (k === 'write') App.go('writer');
+        else if (k === 'read') App.go('reader');
         else Review.open(S.get().reviews.filter(function (r) { return r.weekStart === U.dstr(U.sow(new Date())); })[0] || null);
       };
     });
