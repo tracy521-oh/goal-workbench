@@ -178,7 +178,7 @@
       },
       onSubmit: function (v) {
         v.amount = Number(v.amount) || 0;
-        if (isNew) { v.id = U.uid(); st.finance.avoid.unshift(v); UI.toast('已记录，下次注意 👀', 'ok'); }
+        if (isNew) { v.id = U.uid(); st.finance.avoid.unshift(v); UI.toast('已记录，下次注意 👀', 'ok'); S.drop(1, '记录消费避雷', '攒钱', '💰'); }
         else { var i = st.finance.avoid.findIndex(function (x) { return x.id === a.id; }); v.id = a.id; st.finance.avoid[i] = v; UI.toast('已保存', 'ok'); }
         S.commit();
       }
@@ -307,6 +307,15 @@
       '</div>';
 
     h += '<div class="card"><div class="card-h"><h3>近 6 个月结余趋势</h3></div>' + trend() + '</div>';
+
+    // 月度结余达标奖励
+    var cm = U.mstr();
+    if (stat.surplus > 0 && st.finance.claimedMonth !== cm) {
+      h += '<div class="card" style="border-color:#e0d2f8;background:linear-gradient(180deg,#faf7ff,#fff)">' +
+        '<div class="card-h"><h3>🪙 本月结余达标奖励</h3></div>' +
+        '<p class="tiny muted" style="margin-bottom:10px">本月当前结余为正（' + U.money(stat.surplus) + '），坚持攒钱也是在浇灌你的生命之树。</p>' +
+        '<button class="btn btn-primary btn-block" id="claimMonth">领取 +3 滴水 💧</button></div>';
+    }
     return h;
   }
 
@@ -379,6 +388,10 @@
     if ((q = el.querySelector('#addInc'))) q.onclick = function () { F.txnForm(null, 'income'); };
     if ((q = el.querySelector('#addExp'))) q.onclick = function () { F.txnForm(null, 'expense'); };
     if ((q = el.querySelector('#editBgt'))) q.onclick = function () { F.budgetForm(); };
+    if ((q = el.querySelector('#claimMonth'))) q.onclick = function () {
+      st.finance.claimedMonth = U.mstr(); S.commit();
+      S.drop(3, '本月结余达标', '攒钱', '💰');
+    };
     if ((q = el.querySelector('#addAvoid'))) q.onclick = function () { F.avoidForm(); };
     if ((q = el.querySelector('#mPrev'))) q.onclick = function () { ui.month = shiftM(ui.month, -1); F.render(el); };
     if ((q = el.querySelector('#mNext'))) q.onclick = function () { ui.month = shiftM(ui.month, 1); F.render(el); };
