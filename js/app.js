@@ -6,6 +6,7 @@
     { k: 'study', n: '公考备考', i: '📚', sub: '国考 + 吉林省考 双线推进' },
     { k: 'finance', n: '攒钱规划', i: '💰', sub: '存款目标 · 医疗备用金 · 预算' },
     { k: 'life', n: '生活配套', i: '🌱', sub: '作息 · 运动 · 体检' },
+    { k: 'writer', n: '作家成长路', i: '✍️', sub: '小说创作 · 浇灌生命之树' },
     { k: 'review', n: '每周复盘', i: '🗓', sub: '固定每周日 · 自动加载模板' },
     { k: 'settings', n: '设置', i: '⚙', sub: '考试日期 · 提醒 · 数据备份' }
   ];
@@ -67,6 +68,7 @@
     else if (cur === 'study') Study.render(el);
     else if (cur === 'finance') Fin.render(el);
     else if (cur === 'life') Life.render(el);
+    else if (cur === 'writer') Writer.render(el);
     else if (cur === 'review') Review.render(el);
     else Settings.render(el);
   };
