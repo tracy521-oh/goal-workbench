@@ -397,8 +397,12 @@
   /* ---------------- 主渲染 ---------------- */
   Study.render = function (el) {
     var st = S.get();
+    if (ui.tab !== 'politics' && typeof Politics !== 'undefined') Politics.reset();
     var h = '<div class="row" style="margin-bottom:12px">' +
-      UI.seg([{ v: 'tasks', l: '任务库' }, { v: 'checkin', l: '每日打卡' }, { v: 'phase', l: '阶段进度' }], ui.tab, 'tab') + '</div>';
+      UI.seg([
+        { v: 'tasks', l: '任务库' }, { v: 'checkin', l: '每日打卡' }, { v: 'phase', l: '阶段进度' },
+        { v: 'politics', l: '时政打卡' }, { v: 'reading', l: '申论精读' }, { v: 'wrong', l: '错题本' }
+      ], ui.tab, 'tab') + '</div>';
 
     if (ui.tab === 'tasks') {
       var list = S.q.tasks(ui.f);
@@ -416,6 +420,12 @@
             : viewCalendar(list);
     } else if (ui.tab === 'checkin') {
       h += checkinPage();
+    } else if (ui.tab === 'politics') {
+      Politics.render(el); return;
+    } else if (ui.tab === 'reading') {
+      Reading.render(el); return;
+    } else if (ui.tab === 'wrong') {
+      WrongQ.render(el); return;
     } else {
       h += phasePage();
     }
