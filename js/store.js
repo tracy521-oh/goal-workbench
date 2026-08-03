@@ -66,6 +66,10 @@
         log: {},               // 'YYYY-MM-DD': 当日累计创作字数
         potMark: ''            // 已发放「一壶水」奖励的日期（防重复）
       },
+      // 阅读者
+      reader: {
+        books: []              // 见 reader.js：{id,title,author,category,status,cover,file,page,updatedAt,notes[],quotes[]}
+      },
       // 全局奖励 · 浇灌大树
       rewards: {
         drops: 0,              // 累计水滴（用于大树成长）
