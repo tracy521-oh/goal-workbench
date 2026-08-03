@@ -1,11 +1,11 @@
 {
-  "name": "上岸计划 · 个人目标工作台",
-  "short_name": "上岸计划",
+  "name": "植物生长日记 · 个人目标工作台",
+  "short_name": "植物生长日记",
   "description": "公考备考、攒钱规划、生活配套三位一体的个人目标管理工作台。国考 + 吉林省考双线备考，纯本地离线可用。",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f5f6f8",
-  "theme_color": "#2f5bea",
+  "background_color": "#f4f1f7",
+  "theme_color": "#9b8bb4",
   "orientation": "portrait-primary",
   "scope": ".",
   "icons": [
