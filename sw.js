@@ -1,5 +1,5 @@
 /* 植物生长日记 Service Worker：离线缓存应用全部资源 */
-const CACHE_NAME = 'plant-diary-v4';
+const CACHE_NAME = 'plant-diary-v5';
 const ASSETS = [
   './',
   './index.html',
