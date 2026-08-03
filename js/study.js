@@ -421,11 +421,11 @@
     } else if (ui.tab === 'checkin') {
       h += checkinPage();
     } else if (ui.tab === 'politics') {
-      Politics.render(el); return;
+      renderInto(el, h, function (sub) { Politics.render(sub); }); return;
     } else if (ui.tab === 'reading') {
-      Reading.render(el); return;
+      renderInto(el, h, function (sub) { Reading.render(sub); }); return;
     } else if (ui.tab === 'wrong') {
-      WrongQ.render(el); return;
+      renderInto(el, h, function (sub) { WrongQ.render(sub); }); return;
     } else {
       h += phasePage();
     }
@@ -500,6 +500,12 @@
     if (ui.f.phase) p.phase = ui.f.phase;
     if (ui.f.jlFeature) { p.jlFeature = true; p.exam = '吉林省考专项'; }
     return p;
+  }
+  function renderInto(el, h, cb) {
+    h += '<div id="subPage"></div>';
+    el.innerHTML = h;
+    UI.bindSeg(el, 'tab', function (v) { ui.tab = v; Study.render(el); });
+    cb(el.querySelector('#subPage'));
   }
   function shiftMonth(m, n) {
     var a = m.split('-'), d = new Date(+a[0], +a[1] - 1 + n, 1);
