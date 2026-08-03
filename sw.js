@@ -1,5 +1,5 @@
-/* 上岸计划 Service Worker：离线缓存应用全部资源 */
-const CACHE_NAME = 'shangan-workbench-v1';
+/* 植物生长日记 Service Worker：离线缓存应用全部资源 */
+const CACHE_NAME = 'plant-diary-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -14,6 +14,9 @@ const ASSETS = [
   './js/life.js',
   './js/review.js',
   './js/settings.js',
+  './js/politics.js',
+  './js/reading.js',
+  './js/wrongq.js',
   './js/app.js',
   './icons/icon.svg'
 ];
