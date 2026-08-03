@@ -36,20 +36,28 @@
         '<span class="i">' + n.i + '</span><span>' + n.n + '</span></button>';
     }).join('');
   }
-  function tabHTML() {
-    return NAV.filter(function (n) { return n.k !== 'settings'; }).map(function (n) {
-      return '<button data-nav="' + n.k + '" class="' + (cur === n.k ? 'active' : '') + '">' +
-        '<span class="i">' + n.i + '</span><span>' + n.n + '</span></button>';
-    }).join('');
+
+  function openDrawer() {
+    var sb = document.getElementById('sidebar'), bd = document.getElementById('backdrop');
+    if (sb) sb.classList.add('open');
+    if (bd) bd.classList.add('show');
   }
+  function closeDrawer() {
+    var sb = document.getElementById('sidebar'), bd = document.getElementById('backdrop');
+    if (sb) sb.classList.remove('open');
+    if (bd) bd.classList.remove('show');
+  }
+  App.openDrawer = openDrawer;
+  App.closeDrawer = closeDrawer;
 
   App.render = function () {
     var meta = NAV.filter(function (n) { return n.k === cur; })[0];
     document.getElementById('pageTitle').textContent = meta.n;
     document.getElementById('pageSub').textContent = meta.sub;
     document.getElementById('sideNav').innerHTML = navHTML();
-    document.getElementById('tabBar').innerHTML = tabHTML();
-    U.$$('[data-nav]').forEach(function (b) { b.onclick = function () { App.go(b.dataset.nav); }; });
+    U.$$('[data-nav]').forEach(function (b) {
+      b.onclick = function () { App.go(b.dataset.nav); closeDrawer(); };
+    });
 
     App.refreshTop();
     App.alerts();
@@ -115,7 +123,7 @@
         st._lastRemind = U.today(); S.save();
         if (st.settings.notify && 'Notification' in window && Notification.permission === 'granted') {
           try {
-            new Notification('上岸计划 · 学习打卡', {
+            new Notification('植物生长日记 · 学习打卡', {
               body: '到 ' + st.settings.reminderTime + ' 了，记录今天的学习时长与薄弱考点吧。',
               icon: 'icons/icon.svg', tag: 'daily-checkin'
             });
@@ -156,6 +164,10 @@
   /* ---------- 启动 ---------- */
   function boot() {
     App._day = U.today();
+    var mb = document.getElementById('menuBtn');
+    if (mb) mb.onclick = function () { openDrawer(); };
+    var bd = document.getElementById('backdrop');
+    if (bd) bd.onclick = function () { closeDrawer(); };
     S.sub(function () { App.render(); });
     App.render();
     Review.ensureDigests();
