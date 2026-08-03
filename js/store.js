@@ -53,6 +53,12 @@
         logs: []       // 每日生活打卡
       },
       reviews: [],
+      // 公考备考 · 时政打卡
+      politics: { records: [] },
+      // 公考备考 · 错题本
+      wrongQs: [],
+      // 公考备考 · 申论精读已读标记
+      reading: { read: {} },
       _lastRemind: ''
     };
   }
