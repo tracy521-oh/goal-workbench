@@ -63,6 +63,10 @@
         else { var i = st.life.logs.findIndex(function (x) { return x.id === l.id; }); v.id = l.id; if (i < 0) st.life.logs.unshift(v); else st.life.logs[i] = v; UI.toast('已保存', 'ok'); }
         st.life.logs.sort(function (a, b) { return a.date < b.date ? 1 : -1; });
         S.commit();
+        if (isNew) {
+          if (v.sleepOk) S.drop(1, '今日作息达标', '生活', '🌙');
+          if ((Number(v.sportMin) || 0) > 0) S.drop(1, '完成今日运动', '生活', '🏃');
+        }
       }
     });
   };
@@ -154,7 +158,10 @@
       b.onclick = function (e) {
         e.stopPropagation();
         var i = st.life.items.filter(function (x) { return x.id === b.dataset.ltick; })[0];
-        if (i) { i.done = !i.done; S.commit(); }
+        if (!i) return;
+        var willDone = !i.done;
+        i.done = willDone; S.commit();
+        if (willDone) S.drop(i.type === '体检' ? 2 : 1, '达成生活目标：' + (i.name || i.type), '生活', i.type === '体检' ? '🩺' : '🌱');
       };
     });
     U.$$('[data-llog]', el).forEach(function (b) {
