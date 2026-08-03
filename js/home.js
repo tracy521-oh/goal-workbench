@@ -59,6 +59,21 @@
 
     h += '</div>';
 
+    /* 生命之树 · 全局奖励总目标 */
+    var stage = S.treeStage();
+    h += '<div class="card tree-card" data-go="writer" style="cursor:pointer">' +
+      '<div class="tree-row">' +
+      treeSVG(stage) +
+      '<div class="tree-info">' +
+      '<div class="row" style="margin-bottom:4px"><b style="font-size:15.5px">🌳 浇灌我的生命之树</b>' +
+      '<span class="spacer"></span><span class="chip" style="background:var(--primary-soft);color:var(--primary)">' + stage.cur.icon + ' ' + stage.cur.name + '</span></div>' +
+      '<p class="tiny muted" style="margin:0 0 7px">累计 <b class="num" style="color:var(--primary)">' + stage.drops + '</b> 滴水' +
+      (stage.next ? ' · 距「' + stage.next.icon + stage.next.name + '」还需 <b>' + (stage.next.min - stage.drops) + '</b> 滴' : ' · 🎉 已长成参天大树！') + '</p>' +
+      UI.progressBar(stage.pct) +
+      '<div class="tiny muted" style="margin-top:6px">' + (stage.next ? '下一阶段：' + stage.next.icon + ' ' + stage.next.name + '（' + stage.next.min + ' 滴）' : stage.cur.desc) + '</div>' +
+      '</div></div>' +
+      '<p class="tiny muted" style="text-align:center;margin:0 0 14px">每完成一件事都会化作水滴，汇成你的成长之树 · 点此进入作家成长路</p>';
+
     /* 今日三件要事 */
     h += '<div class="card top3"><div class="card-h"><h3>🎯 今日 3 件核心要事</h3>' +
       '<span class="hint">' + U.today() + ' 周' + U.wdOf(U.today()) + '</span></div>' +
@@ -76,6 +91,7 @@
       '<button data-q="txn"><span class="i">💴</span>登记收支</button>' +
       '<button data-q="checkin"><span class="i">✅</span>学习打卡</button>' +
       '<button data-q="review"><span class="i">🗓</span>每周复盘</button>' +
+      '<button data-q="write"><span class="i">✍️</span>开始创作</button>' +
       '</div></div>';
 
     /* 今日任务 */
@@ -103,6 +119,8 @@
       '<div class="kv"><span>⭐ 吉林特色考点任务</span><b>' +
       st.tasks.filter(function (t) { return t.jlFeature && t.status === '已完成'; }).length + ' / ' +
       st.tasks.filter(function (t) { return t.jlFeature; }).length + '</b></div>' +
+      '<div class="kv"><span>✍️ 今日创作字数</span><b>' + (st.writer.log[U.today()] || 0) + ' 字' +
+      ((st.writer.log[U.today()] || 0) >= 2000 ? ' 🪣' : '') + '</b></div>' +
       '</div>';
 
     el.innerHTML = h;
@@ -131,6 +149,7 @@
         if (k === 'task') Study.taskForm();
         else if (k === 'txn') Fin.txnForm(null, 'expense');
         else if (k === 'checkin') Study.checkinForm();
+        else if (k === 'write') App.go('writer');
         else Review.open(S.get().reviews.filter(function (r) { return r.weekStart === U.dstr(U.sow(new Date())); })[0] || null);
       };
     });
@@ -143,6 +162,26 @@
       };
     });
   };
+
+  function treeSVG(stage) {
+    var idx = Math.min(stage.idx, 5);
+    var greens = ['#c9bfe0', '#bcd6ac', '#a6cf8c', '#8bc06f', '#6db356', '#4f9d43'];
+    var g = greens[idx];
+    var r = 15 + idx * 7;
+    var trunkW = 6 + idx * 1.4;
+    var crownY = 120 - r;
+    var circles = '<circle cx="60" cy="' + crownY + '" r="' + r + '" fill="' + g + '"/>';
+    if (idx >= 2) {
+      circles += '<circle cx="' + (60 - r * 0.62) + '" cy="' + (crownY + 5) + '" r="' + (r * 0.72) + '" fill="' + g + '" opacity="0.92"/>';
+      circles += '<circle cx="' + (60 + r * 0.62) + '" cy="' + (crownY + 5) + '" r="' + (r * 0.72) + '" fill="' + g + '" opacity="0.92"/>';
+    }
+    if (idx >= 4) circles += '<circle cx="60" cy="' + (crownY - r * 0.5) + '" r="' + (r * 0.62) + '" fill="' + g + '" opacity="0.95"/>';
+    var trunkTop = crownY + r * 0.35;
+    return '<svg viewBox="0 0 120 140" width="96" height="112" aria-label="生命之树">' +
+      '<ellipse cx="60" cy="133" rx="42" ry="6" fill="#e9ebf0"/>' +
+      '<rect x="' + (60 - trunkW / 2) + '" y="' + trunkTop + '" width="' + trunkW + '" height="' + (130 - trunkTop) + '" rx="3" fill="#9b7b5a"/>' +
+      circles + '</svg>';
+  }
 
   g.Home = H;
 })(window);
